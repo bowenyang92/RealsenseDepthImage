@@ -1,0 +1,7 @@
+flask
+requests
+pillow
+numpy
+opencv-python
+rospkg
+pyyaml
