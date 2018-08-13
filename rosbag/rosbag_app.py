@@ -1,5 +1,6 @@
 from flask import Flask, request, send_file, render_template
 from rosbag_utils import MyRosbag
+from depth_complete import depthComplete
 import requests
 import os
 import sys
@@ -55,6 +56,7 @@ def realsense():
     # Both rosbag_app.py and depth processing service are running on 65
     # For some reason cannot access 65 from 65, have to use localhost
     new_image = requests.post('http://localhost:5004/image', parsed['color-frame'])
+    depth_image = requests.post('http://localhost:5004/image', parsed['depth-frame'])
     cropped_img = requests.post('http://localhost:5004/crop', json = parsed)
     depth_vis = requests.post('http://localhost:5004/depthcolor', parsed['distance'])
 
@@ -69,16 +71,21 @@ def realsense():
 
 
     new_image_pil = Image.open(BytesIO(new_image.content))
+    depth_image_pil = Image.open(BytesIO(depth_image.content))
     cropped_img_pil = Image.open(BytesIO(cropped_img.content))
+    complete_img_pil = Image.open(depthComplete(str(parsed['distance'])))
     depth_vis_pil = Image.open(BytesIO(depth_vis.content))
 
    
 
     return render_template('index.html', has_depth_result = True,
         new_color_src = embed_image_html(new_image_pil),
+        depth_color_src = embed_image_html(depth_image_pil),
         cropped_src = embed_image_html(cropped_img_pil),
+        complete_src = embed_image_html(complete_img_pil),
         depth_vis_src = embed_image_html(depth_vis_pil)
     )
+
 
 def embed_image_html(image):
     """Creates an image embedded in HTML base64 format.
